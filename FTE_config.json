@@ -111,6 +111,10 @@
         {
           "offset": "745eb4",
           "patch": "9090"
+        },
+        {
+          "offset": "718ba8",
+          "patch": "d9c0d9c08d44e41cd95ce420d95ce424c605b7e08b0001d95ce41c508b8efa000000eb5f"
         }
       ]
     }
