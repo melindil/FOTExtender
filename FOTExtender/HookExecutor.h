@@ -44,17 +44,13 @@ public:
 	void TeamPlayerTrigger(void* entity);
 	void IsRadiated(void* entity);
 	void LongTickTrigger(void* entity);
+	void DefaultStyleConstructed(void* style);
 	void OnStart();
 	void ReplacePerk(FOTPerkTableEntry* newstat, int entry);
 	void ReplacePerk(lua_State* l);
 
 private:
-
-	// Entity-specific functions
-	//void ShowEntityMessage(void* entity, WCHAR const* msg);
-	//bool EntityHasPerk(void* entity, int perknum);
-	//DWORD GetEntityTempPerkValue(void* entity, int perknum);
-	//void SetEntityTempPerkValue(void* entity, int perknum, DWORD val);
+	static const uint32_t DATA_PERK_TABLE = 0x8a4500;
 
 	Logger* logger_;
 	lua_State* lua_;

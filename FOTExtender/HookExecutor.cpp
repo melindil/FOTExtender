@@ -27,26 +27,11 @@ SOFTWARE.
 #include "FOTPerkTable.h"
 #include "AttributesTable.h"
 #include "LuaHelper.h"
+#include "DefaultStyle.h"
 #include <string>
 #include <vector>
 #include <sstream>
 #include <iomanip>
-
-
-
-//const int ENTITY_OFFSET_ATTRIBUTES = 0x2a2;
-//const int ENTITY_OFFSET_TEMP_ATTRIBUTES = 0x914;
-
-//const int INDEX_DERIVED_RADRESIST = 3;
-//const int INDEX_DERIVED_NORMALRESIST = 14;
-
-//const int ATTRIBUTES_SIZE = 0x339;
-
-const uint32_t DATA_PERK_TABLE = 0x8a4500;
-//const DWORD FXN_ENTITY_SHOWMESSAGE = 0x5e6d20;
-//const DWORD FXN_ATTRIBUTES_CONSTRUCTOR = 0x608d30;
-//const DWORD FXN_ENTITY_APPLYBUFF = 0x56f300;
-//const DWORD FXN_ENTITY_REMOVEBUFF = 0x56f510;
 
 // Lua stubs
 int l_replaceperk(lua_State* l)
@@ -69,6 +54,7 @@ HookExecutor::HookExecutor(Logger* logger)
 
 	logger->RegisterLUA(lua_);
 	Entity::RegisterLua(lua_, logger);
+	DefaultStyle::RegisterLua(lua_);
 
 	// Register HookExecutor functions for Lua
 	HookExecutor** heptrptr = (HookExecutor**)lua_newuserdata(lua_, sizeof(HookExecutor*));
@@ -83,36 +69,9 @@ HookExecutor::HookExecutor(Logger* logger)
 	
 }
 
-//static const DWORD FXN_FOTHEAPALLOC = 0x6c4dd0;
-//static char* (*FOTHeapAlloc)(DWORD) = (char* (*)(DWORD))FXN_FOTHEAPALLOC;
-
 HookExecutor::~HookExecutor()
 {
 }
-
-/*void HookExecutor::ShowEntityMessage(void* entity, WCHAR const* msg)
-{
-	DummyClass* c1 = (DummyClass*)entity;
-	auto fxn = &DummyClass::Entity_ShowMessage;
-	size_t offset = FXN_ENTITY_SHOWMESSAGE;
-	memcpy(&fxn, &offset, 4);
-
-	// Things work much better if we let FoT allocate the memory for the
-	// message.  Note that there are three DWORDs before the message
-	// content: A usage counter (which should start at 0 in this code
-	// location), an entity size?, and a string length in chars
-	DWORD len = 14 + 2 * wcslen(msg);
-	char* alloced = FOTHeapAlloc(len);
-
-	*((DWORD*)alloced) = 0;	// Ref count
-	*((DWORD*)alloced + 1) = wcslen(msg);
-	*((DWORD*)alloced + 2) = wcslen(msg);
-	alloced += 12;
-	wcscpy_s((WCHAR*)alloced, (len - 12) / 2, msg);
-
-	(c1->*fxn)(((DWORD)&alloced), 0x8be1c8);
-	
-}*/
 
 void HookExecutor::ReplacePerk(FOTPerkTableEntry* newperk, int entry)
 {
@@ -186,8 +145,6 @@ void HookExecutor::ReplacePerk(lua_State* l)
 // Added this trigger since I was familiar with the code in that area.
 void HookExecutor::TeamPlayerTrigger(void* entity)
 {
-	//static const WCHAR* tpmsg = L"<Cg>HULK SMASH!";
-	//ShowEntityMessage(entity, tpmsg);
 	std::stringstream ss;
 	ss << "TeamPlayer trigger, entity address 0x" << std::hex << (size_t)(entity) << std::dec;
 	logger_->Log(ss.str());
@@ -197,51 +154,6 @@ void HookExecutor::TeamPlayerTrigger(void* entity)
 
 void HookExecutor::IsRadiated(void* entity)
 {
-	/* old code
-	if (EntityHasPerk(entity, 18))
-	{
-		*logger_ << "Entity 0x" << (uint32_t)entity << " radiated with perk" << std::endl;
-
-		if (GetEntityTempPerkValue(entity, 18) == 0)
-		{
-			*logger_ << "Entity 0x" << (uint32_t)entity << " gaining Hulk Smash" << std::endl;
-
-			// Indicate bonus to player
-			static const WCHAR* tpmsg = L"<Cg>HULK SMASH!";
-			ShowEntityMessage(entity, tpmsg);
-
-			// Apply the bonus
-			
-			// Let FOT construct a temp attribute table for us
-			std::vector<char> temp_attribute_table(ATTRIBUTES_SIZE, 0);
-			DummyClass* c1 = (DummyClass*)temp_attribute_table.data();
-			auto fxn = &DummyClass::AttributeTable_Constructor;
-			size_t offset = FXN_ATTRIBUTES_CONSTRUCTOR;
-			memcpy(&fxn, &offset, 4);
-			(c1->*fxn)();
-
-			DWORD* statsptr = (DWORD*)(temp_attribute_table.data()
-				+ AttributesTable::GetOffsetByName("strength")); // offset to table
-			*statsptr = 2;
-
-			statsptr = (DWORD*)(temp_attribute_table.data()
-				+ AttributesTable::GetOffsetByName("radiationResist"));
-			*statsptr = 75;
-
-			// Now we need to call the routine that applies the bonus
-			c1 = (DummyClass*)entity;
-			auto fxn2 = &DummyClass::ApplyBuff;
-			size_t offset2 = FXN_ENTITY_APPLYBUFF;
-			memcpy(&fxn2, &offset2, 4);
-			(c1->*fxn2)(temp_attribute_table.data(), 0, 1.0);
-			
-		}
-		else
-		{
-			*logger_  << "Entity 0x" << (uint32_t)entity << " refreshing Hulk Smash" << std::endl;
-		}
-		SetEntityTempPerkValue(entity, 18, 6);
-	}*/
 	lua_getglobal(lua_, "OnRadiated");
 	if (lua_isfunction(lua_, -1))
 	{
@@ -256,46 +168,6 @@ void HookExecutor::IsRadiated(void* entity)
 // Trigger for "long" (10 sec) game tick
 void HookExecutor::LongTickTrigger(void* entity)
 {
-	/* old (working) code
-	DWORD hulksmashctr = GetEntityTempPerkValue(entity, 18);
-	if (hulksmashctr > 0)
-	{
-		hulksmashctr--;
-		SetEntityTempPerkValue(entity, 18, hulksmashctr);
-		if (hulksmashctr == 0)
-		{
-			// Remove the perk
-			static const WCHAR* tpmsg = L"Normal";
-			ShowEntityMessage(entity, tpmsg);
-
-			// Remove the bonus
-
-			// Let FOT construct a temp attribute table for us
-			std::vector<char> temp_attribute_table(ATTRIBUTES_SIZE, 0);
-			DummyClass* c1 = (DummyClass*)temp_attribute_table.data();
-			auto fxn = &DummyClass::AttributeTable_Constructor;
-			size_t offset = FXN_ATTRIBUTES_CONSTRUCTOR;
-			memcpy(&fxn, &offset, 4);
-			(c1->*fxn)();
-
-			DWORD* statsptr = (DWORD*)(temp_attribute_table.data()
-				+ AttributesTable::GetOffsetByName("strength")); // offset to table
-			*statsptr = 2;
-
-			statsptr = (DWORD*)(temp_attribute_table.data()
-				+ AttributesTable::GetOffsetByName("radiationResist"));
-			*statsptr = 75;
-
-			// Now we need to call the routine that applies the bonus
-			c1 = (DummyClass*)entity;
-			auto fxn2 = &DummyClass::ApplyBuff;
-			size_t offset2 = FXN_ENTITY_REMOVEBUFF;
-			memcpy(&fxn2, &offset2, 4);
-			(c1->*fxn2)(temp_attribute_table.data(), 0, 1.0);
-
-
-		}
-	}*/
 	lua_getglobal(lua_, "OnLongTick");
 	if (lua_isfunction(lua_, -1))
 	{
@@ -350,4 +222,15 @@ void HookExecutor::OnStart()
 	// NOTE that this means OnStart shouldn't touch any entities (none are in memory yet anyway)
 	AttributesTable::Initialize(logger_);
 
+}
+
+void HookExecutor::DefaultStyleConstructed(void* style)
+{
+	lua_getglobal(lua_, "DefaultStyleChanges");
+	if (lua_isfunction(lua_, -1))
+	{
+		DefaultStyle d(style, logger_);
+		d.MakeLuaObject(lua_);
+		lua_pcall(lua_, 1, 0, 0);
+	}
 }

@@ -12,6 +12,16 @@ function OnStart ()
     hookexecutor:ReplacePerk(newperk, 18)
 end
 
+function DefaultStyleChanges(style)
+  style:SetColorDefaultText(0.9,0.6,0.0)
+  style:SetColorHighlightText(1.0,1.0,0.0)
+  style:SetColorOptionsPages(1.0,1.0,1.0)
+  style:SetColorPanelTitles(1.0,1.0,1.0)
+  style:SetColorBuffs(0.0,0.2,1.0)
+  style:SetColorDebuffs(0.0,1.0,0.0)
+  style:SetColorTags(0.45,0.3,0)
+end
+
 function OnRadiated(e)
     logger:log("Radiated: " .. e["name"])
     if e:HasPerk("hulkSmash") then

@@ -82,7 +82,21 @@ HookInstaller::HookDefinition HookInstaller::hooks_[] =
 		ConvertFunctionOneParam(&HookExecutor::LongTickTrigger)
 
 	},
-	{0,0,0,0,0,0,0,0,0}
+	// DefaultStyle constructed hook
+	{
+		0x731ba2,
+		6,				// Replacing 6 bytes
+		0,
+		6,				// Append the instruction after we run our hook
+		"\x56",			// push esi
+		1,
+		"",
+		0,				// No cleanup needed
+
+		ConvertFunctionOneParam(&HookExecutor::DefaultStyleConstructed)
+
+	},
+    {0,0,0,0,0,0,0,0,0}
 };
 
 HookInstaller::HookInstaller(Logger* logger)

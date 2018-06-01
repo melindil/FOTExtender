@@ -3,3 +3,17 @@
 ################################################################################
 
 /.vs/FOTExtender/v15
+/FOTExtender/Release/FOTExtender.tlog
+/FOTExtender/Release
+/FOTExtender/x64
+/FTEInstaller/Release
+/FTEInstaller/x64/Debug
+/FTEInstaller/x64/Release
+/Release/FTE.lib
+/Release/FTE.ipdb
+/Release/FTE.iobj
+/Release/FTE.exp
+/Release/FTEInstaller.pdb
+/Release/FTEInstaller.ipdb
+/Release/FTEInstaller.iobj
+/x64/Release
